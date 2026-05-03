@@ -222,6 +222,166 @@ static void CleanupExes(const std::string& exeDir) {
         DeleteFileA((exeDir + "\\" + f).c_str());
 }
 
+static void ApplyCTTTweaks() {
+    HKEY hKey;
+    DWORD zero = 0;
+    DWORD one = 1;
+    DWORD two = 2;
+    DWORD ffffffff = 0xffffffff;
+
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Policies\\Microsoft\\Windows\\System", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "EnableActivityFeed", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "PublishUserActivities", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "UploadUserActivities", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\location", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "Value", 0, REG_SZ, (LPBYTE)"Deny", 5);
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Sensor\\Overrides\\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "SensorPermissionState", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\lfsvc\\Service\\Configuration", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "Status", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\Maps", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "AutoUpdateEnabled", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Policies\\Microsoft\\Windows\\Explorer", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "DisableNotificationCenter", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "ToastEnabled", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RunCmd("powershell -NoProfile -Command \"Remove-Item -Path 'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\StorageSense\\Parameters\\StoragePolicy' -Recurse -ErrorAction SilentlyContinue\"");
+
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Accessibility\\StickyKeys", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "Flags", 0, REG_SZ, (LPBYTE)"506", 4);
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_USERS, ".DEFAULT\\Control Panel\\Keyboard", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "InitialKeyboardIndicators", 0, REG_SZ, (LPBYTE)"2", 2);
+    RegCloseKey(hKey);
+
+    RunCmd("powershell -NoProfile -Command \"New-Item -Path 'HKCU:\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}' -Name 'InprocServer32' -Force | New-ItemProperty -Name '(default)' -Value '' -PropertyType String -Force\"");
+
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "HideFileExt", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "Hidden", 0, REG_DWORD, (LPBYTE)&one, sizeof(one));
+    RegSetValueExA(hKey, "TaskbarDa", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "ShowTaskViewButton", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "SearchboxTaskbarMode", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "ListviewAlphaSelect", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "ListviewShadow", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "TaskbarAnimations", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Desktop", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "DragFullWindows", 0, REG_SZ, (LPBYTE)"0", 2);
+    RegSetValueExA(hKey, "MenuShowDelay", 0, REG_SZ, (LPBYTE)"0", 2);
+    RegSetValueExA(hKey, "UserPreferencesMask", 0, REG_BINARY, (LPBYTE)"\x90\x12\x03\x80\x10\x00\x00\x00", 8);
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Desktop\\WindowMetrics", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "MinAnimate", 0, REG_SZ, (LPBYTE)"0", 2);
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Keyboard", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "KeyboardDelay", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "VisualFXSetting", 0, REG_DWORD, (LPBYTE)&two, sizeof(two));
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\DWM", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "EnableAeroPeek", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Search", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "BingSearchEnabled", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_CURRENT_USER, "System\\GameConfigStore", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "GameDVR_FSEBehavior", 0, REG_DWORD, (LPBYTE)&two, sizeof(two));
+    RegSetValueExA(hKey, "GameDVR_Enabled", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "GameDVR_DXGIHonorFSEWindowsCompatible", 0, REG_DWORD, (LPBYTE)&one, sizeof(one));
+    RegSetValueExA(hKey, "GameDVR_HonorUserFSEBehaviorMode", 0, REG_DWORD, (LPBYTE)&one, sizeof(one));
+    RegSetValueExA(hKey, "GameDVR_EFSEFeatureFlags", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "AllowGameDVR", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\GameBar", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "AllowAutoGameMode", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegSetValueExA(hKey, "AutoGameModeEnabled", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "HwSchMode", 0, REG_DWORD, (LPBYTE)&two, sizeof(two));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "EnableTransparency", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Mouse", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "MouseSpeed", 0, REG_SZ, (LPBYTE)"0", 2);
+    RegSetValueExA(hKey, "MouseThreshold1", 0, REG_SZ, (LPBYTE)"0", 2);
+    RegSetValueExA(hKey, "MouseThreshold2", 0, REG_SZ, (LPBYTE)"0", 2);
+    RegCloseKey(hKey);
+
+    RunCmd("powercfg.exe /hibernate off");
+
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\Tcpip6\\Parameters", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "DisabledComponents", 0, REG_DWORD, (LPBYTE)&ffffffff, sizeof(ffffffff));
+    RegCloseKey(hKey);
+    RunCmd("powershell -Command \"Disable-NetAdapterBinding -Name '*' -ComponentID ms_tcpip6\"");
+
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "EnableLUA", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+
+    RegCreateKeyExA(HKEY_LOCAL_MACHINE, "System\\CurrentControlSet\\Control\\Session Manager\\Power", 0, nullptr, 0, KEY_SET_VALUE, nullptr, &hKey, nullptr);
+    RegSetValueExA(hKey, "HibernateEnabled", 0, REG_DWORD, (LPBYTE)&zero, sizeof(zero));
+    RegCloseKey(hKey);
+}
+
+static void ApplyServiceTweaks() {
+    std::vector<std::string> disabled = {
+        "AJRouter","AppVClient","AssignedAccessManagerSvc","DiagTrack","DialogBlockingService",
+        "MSDTC","NetTcpPortSharing","RemoteAccess","RemoteRegistry","UevAgentService",
+        "shpamsvc","smphost","ssh-agent","tzautoupdate","uhssvc",
+        "AppIDSvc","AppMgmt","AppReadiness","AppXSvc","Appinfo","AxInstSV","BDESVC",
+        "BTAGService","BcastDVRUserService_dc2a4","Browser","CDPSvc","COMSysApp",
+        "CaptureService_dc2a4","CertPropSvc","ClipSVC","ConsentUxUserSvc_dc2a4",
+        "CredentialEnrollmentManagerUserSvc_dc2a4","CscService","DcpSvc","DevQueryBroker",
+        "DeviceAssociationBrokerSvc_dc2a4","DeviceAssociationService","DeviceInstall",
+        "DevicePickerUserSvc_dc2a4","DevicesFlowUserSvc_dc2a4","DisplayEnhancementService",
+        "DmEnrollmentSvc","DsSvc","DsmSvc","EapHost","EntAppSvc","FDResPub","FrameServer",
+        "FrameServerMonitor","GraphicsPerfSvc","HvHost","IEEtwCollectorService","IKEEXT",
+        "InstallService","InventorySvc","IpxlatCfgSvc","KtmRm","LicenseManager","LxpSvc",
+        "MSiSCSI","McpManagementService","MessagingService_dc2a4","MixedRealityOpenXRSvc",
+        "MsKeyboardFilter","NPSMSvc_dc2a4","NaturalAuthentication","NcaSvc","NcbService",
+        "NcdAutoSetup","NetSetupSvc","Netlogon","NgcCtnrSvc","NgcSvc","NlaSvc",
+        "P9RdrService_dc2a4","PNRPAutoReg","PNRPsvc","PcaSvc","PeerDistSvc",
+        "PenService_dc2a4","PerfHost","PhoneSvc","PimIndexMaintenanceSvc_dc2a4","PolicyAgent",
+        "PrintNotify","PrintWorkflowUserSvc_dc2a4","PushToInstall","QWAVE","RasAuto","RasMan",
+        "RetailDemo","RmSvc","RpcLocator","SCPolicySvc","SCardSvr","SDRSVC","SEMgrSvc",
+        "SNMPTRAP","SNMPTrap","SSDPSRV","ScDeviceEnum","SecurityHealthService","Sense",
+        "SensorDataService","SensorService","SensrSvc","SessionEnv","SharedAccess",
+        "SharedRealitySvc","SmsRouter","SstpSvc","StateRepository","StiSvc","StorSvc",
+        "TabletInputService","TapiSrv","TextInputManagementService","WbioSrvc","WdNisSvc"
+    };
+    std::vector<std::string> manual = {
+        "HomeGroupListener","HomeGroupProvider","DoSvc","MapsBroker","WSearch","AppMgmt"
+    };
+    std::vector<std::string> delayedAuto = {
+        "sppsvc"
+    };
+    for (auto& s : disabled) RunCmd("sc config \"" + s + "\" start= disabled 2>nul");
+    for (auto& s : manual)   RunCmd("sc config \"" + s + "\" start= demand 2>nul");
+    for (auto& s : delayedAuto) RunCmd("sc config \"" + s + "\" start= delayed-auto 2>nul");
+}
+
 static void ApplyPTTweaks() {
     std::vector<std::string> cmds = {
         "schtasks /Change /TN \"MicrosoftEdgeUpdateTaskMachineUA\" /Disable 2>nul",
@@ -397,6 +557,12 @@ int main() {
     EnsureDependencies(exeDir);
 
     PrintHeader("PT TWEAKS  -  Applying Tweaks");
+
+    std::cout << " [*] Running CTT Tweaks..." << std::endl;
+    ApplyCTTTweaks();
+
+    std::cout << " [*] Running Service Tweaks..." << std::endl;
+    ApplyServiceTweaks();
 
     std::cout << " [*] Running PT Tweaks..." << std::endl;
     ApplyPTTweaks();
